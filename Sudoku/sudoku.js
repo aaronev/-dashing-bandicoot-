@@ -23,6 +23,7 @@ module.exports = class Sudoku{
 
 
   isSolved() {
+    this.errorChecking()
     // Is everything a number and there's no .'s?
     // Are any numbers repeated where they're not allowed?
 
@@ -37,11 +38,28 @@ module.exports = class Sudoku{
     return false
   }
 
-  solve() {
+  errorChecking() {
     const board = this.board
     let squareRepeat = false
+
     // Check for errors:
-    // Check if number is repeated in single square
+    squareRepeat = this.checkSquare(squareRepeat)
+    squareRepeat = this.checkRow(squareRepeat)
+
+    const errorConditions = (
+        board.length !== BOARD_LENGTH
+     || squareRepeat
+    )
+    if(errorConditions) return 'ERROR: Bad Board'
+  }
+
+  solve() {
+    this.errorChecking()
+
+    // Solve the board
+  }
+
+  checkSquare(squareRepeat) {
     for(let bigSquare of this.squaresArr) {
       for(let iterI in bigSquare){
         iterI = parseInt(iterI)
@@ -54,29 +72,33 @@ module.exports = class Sudoku{
       }
     }
 
-    // Check if number is repeated along row.
+    return squareRepeat
+  }
+
+  checkRow(squareRepeat) {
     const arrRows = []
+    const board = this.board
+
     for(let itJ = 0; itJ < 9; itJ++) { // Rows
-      const littleArr = []
-      for(let itI = 0; itI < 9; itI++) { // Columns
-        littleArr.push( board[itJ][itI] )
-      }
-      arrRows.push( littleArr )
+      arrRows.push( board.substring(itJ*9, (itJ*9)+9).split('') )
     }
 
     for(let itI of arrRows) {
-      itI.some( ele, idx => {
-        
-      })
+      for(let itJ in itI) {
+        let tempBool = itI.some( (ele, idx) => {
+          itI[itJ].indexOf(ele) !== idx
+        })
+        squareRepeat = tempBool ? true : squareRepeat
+        // squareRepeat   tempBool    newValue
+        //      T             T           T
+        //      T             F           T
+        //      F             T           T
+        //      F             F           F
+        // NAND Latch
+      }
     }
 
-    console.log('THIS.BOARD', board.length)
-    console.log('SQUAREREPEAT', squareRepeat)
-    const errorConditions = (
-        board.length !== BOARD_LENGTH
-     || squareRepeat
-    )
-    if(errorConditions) return 'ERROR: Bad Board'
+    return squareRepeat
   }
 
   printBoard() {
