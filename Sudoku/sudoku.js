@@ -1,104 +1,47 @@
 const SQUARES = require('./locationMap.js')
 const BOARD_LENGTH = 81
-//
-// This is only a SKELETON file for the "Sudoku" exercise. It's been provided as a
-// convenience to get you started writing code faster.
-//
 
 module.exports = class Sudoku{
   constructor(board){
-    // THIS would be the better way of handling a bad board,
-    // but testing suite won't let us throw error at beginning.
-    // if(board.length !== BOARD_LENGTH){
-    //   throw new Error('ERROR: Bad Board')
-    // }
     this.board = board
     this.solved = false
 
     // Build object from squares location map
-    this.squaresObj = this.buildContainer('object')
-    this.squaresArr = this.buildContainer('array')
+// TODO: Will be use this? :
+// this.squaresObj = this.buildSquareContainer('object')
+    this.squaresArr = this.buildSquareContainer('array')
+    this.rowsArr = this.buildRowContainer()
+    this.columnsArr = this.buildColumnContainer()
   }
-
-
 
   isSolved() {
-    this.errorChecking()
-    // Is everything a number and there's no .'s?
-    // Are any numbers repeated where they're not allowed?
+    let error = this.errorChecking()
+    if(error) return error
 
-    const flattenedArray = this.squaresArr.reduce( (a,b) => {
-      // console.log('a:', a, '\nb:', b)
-      return a.concat(b)
-    })
-    for(let smallSquare of flattenedArray) {
-      // console.log( smallSquare )
-    }
+    // Any .'s remaining?
+    const regex = /\./
+    const condition = this.board.match(regex) !== null
+    if(condition) return false
 
-    return false
+    return true
   }
 
-  errorChecking() {
-    const board = this.board
-    let squareRepeat = false
-
-    // Check for errors:
-    squareRepeat = this.checkSquare(squareRepeat)
-    squareRepeat = this.checkRow(squareRepeat)
-
-    const errorConditions = (
-        board.length !== BOARD_LENGTH
-     || squareRepeat
-    )
-    if(errorConditions) return 'ERROR: Bad Board'
+  errorChecking(){
+    return require('./errorChecking')
+      (this.board
+     , this.squaresArr
+     , this.rowsArr
+     , this.columnsArr
+     , BOARD_LENGTH)
   }
 
   solve() {
-    this.errorChecking()
+    let error = this.errorChecking()
+    if(error) return error
+
+    // Check
 
     // Solve the board
-  }
-
-  checkSquare(squareRepeat) {
-    for(let bigSquare of this.squaresArr) {
-      for(let iterI in bigSquare){
-        iterI = parseInt(iterI)
-        for(let iterJ = iterI+1; iterJ < 9; iterJ++) { // What big O is this?
-          if( bigSquare[ iterI ] === bigSquare[ iterJ ] ) {
-            squareRepeat = true
-            break
-          }
-        }
-      }
-    }
-
-    return squareRepeat
-  }
-
-  checkRow(squareRepeat) {
-    const arrRows = []
-    const board = this.board
-
-    for(let itJ = 0; itJ < 9; itJ++) { // Rows
-      arrRows.push( board.substring(itJ*9, (itJ*9)+9).split('') )
-    }
-
-    for(let itI of arrRows) {
-      for(let itJ in itI) {
-        let tempBool = itI.some( (ele, idx) => {
-          itI[itJ].indexOf(ele) !== idx
-        })
-        squareRepeat = tempBool ? true : squareRepeat
-        // squareRepeat   tempBool    newValue
-        //      T             T           T
-        //      T             F           T
-        //      F             T           T
-        //      F             F           F
-        // NAND Latch
-      }
-    }
-
-    return squareRepeat
   }
 
   printBoard() {
@@ -114,7 +57,7 @@ module.exports = class Sudoku{
     console.log( logString )
   }
 
-  buildContainer(arrayOrObject){
+  buildSquareContainer(arrayOrObject){
     const bigSquareContainer = arrayOrObject === 'array' ? [] : {}
     for(let bigSquare in SQUARES) {
       let iterI = 0
@@ -132,5 +75,27 @@ module.exports = class Sudoku{
     }
 
     return bigSquareContainer
+  }
+
+  buildRowContainer() {
+    const arr = []
+    for(let itJ = 0; itJ < 9; itJ++) {
+      arr.push( this.board.substring(itJ*9, (itJ*9)+9).split('') )
+    }
+
+    return arr
+  }
+
+  buildColumnContainer() {
+    const arr = []
+    for(let itI = 0; itI < 9; itI++) {
+      let smallArr = []
+      for(let itJ = 0; itJ < 9; itJ++) {
+        smallArr.push( this.board.substring( (itI+(itJ*9)), (itI+(itJ*9) + 1) ) )
+      }
+      arr.push(smallArr)
+    }
+
+    return arr
   }
 }
