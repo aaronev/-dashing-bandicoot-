@@ -1,18 +1,39 @@
-//
-// This is only a SKELETON file for the "Sudoku" exercise. It's been provided as a
-// convenience to get you started writing code faster.
-//
+const {buildMap} = require('./buildMap')
 
-var Sudoku = function(board) {
-  
-};
+module.exports = class Sudoku{
+  constructor(board){
+    this.board = buildMap(board)
+  }
 
-Sudoku.prototype.isSolved = function() {
+  isSolved() {
 
-};
+  }
 
-Sudoku.prototype.solve = function() {
+  errorChecking(){
 
-};
+  }
 
-module.exports = Sudoku;
+  solve() {
+    // DEBUG: Remove me before production or Prrr:
+    console.log('\n')
+    this.printBoard()
+
+    let error = this.errorChecking()
+    if(error) return error
+
+  }
+
+  printBoard() {
+    const board = this.board
+    let logString = ' |-----------------------|\n'
+    for(let iterI = 0; iterI < 80; iterI += 3) {
+      logString += ' | ' + board.substring(iterI, iterI+1) + ' '
+                + board.substring(iterI+1, iterI+2) + ' '
+                + board.substring(iterI+2, iterI+3)
+      if( (iterI+3) % 9 === 0 ) logString += ' |\n'
+      if( (iterI+3) % 27 === 0 ) logString += ' |-----------------------|\n'
+    }
+    console.log( logString )
+    console.log( this.numbersNeeded )
+  }
+}
