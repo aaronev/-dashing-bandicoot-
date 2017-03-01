@@ -1,5 +1,5 @@
-const SQUARES = require('./locationMap.js')
-const BOARD_LENGTH = 81
+const {SQUARES, BOARD_LENGTH, NUMBERS_PER_SQUARE} = require('./constants')
+const BuildFunctions = require('./buildFunctions')
 
 module.exports = class Sudoku{
   constructor(board){
@@ -9,16 +9,18 @@ module.exports = class Sudoku{
     // Build object from squares location map
 // TODO: Will be use this? :
 // this.squaresObj = this.buildSquareContainer('object')
-    this.squaresArr = this.buildSquareContainer('array')
-    this.rowsArr = this.buildRowContainer()
-    this.columnsArr = this.buildColumnContainer()
+    this.squaresArr = BuildFunctions.buildSquareContainer('array', this.board)
+    this.rowsArr = BuildFunctions.buildRowContainer(this.board)
+    this.columnsArr = BuildFunctions.buildColumnContainer(this.board)
+
+    // Destructuring, OOP style | http://stackoverflow.com/questions/32413025/es6-destructuring-in-class-constructor
+    Object.assign( this, BuildFunctions.buildNumbersUsedNeeded(this.squaresArr) )
   }
 
   isSolved() {
     let error = this.errorChecking()
     if(error) return error
 
-    // Any .'s remaining?
     const regex = /\./
     const condition = this.board.match(regex) !== null
     if(condition) return false
@@ -36,12 +38,13 @@ module.exports = class Sudoku{
   }
 
   solve() {
+    // DEBUG: Remove me before production or Prrr:
+    console.log('\n')
+    this.printBoard()
+
     let error = this.errorChecking()
     if(error) return error
 
-    // Check
-
-    // Solve the board
   }
 
   printBoard() {
@@ -55,47 +58,6 @@ module.exports = class Sudoku{
       if( (iterI+3) % 27 === 0 ) logString += ' |-----------------------|\n'
     }
     console.log( logString )
-  }
-
-  buildSquareContainer(arrayOrObject){
-    const bigSquareContainer = arrayOrObject === 'array' ? [] : {}
-    for(let bigSquare in SQUARES) {
-      let iterI = 0
-      const smallSquareContainer = arrayOrObject === 'array' ? [] : {}
-      for(let smallSquare in SQUARES[ bigSquare ]) {
-        const location = SQUARES[ bigSquare ][ smallSquare ]
-        const smallIndex = arrayOrObject === 'array' ? iterI++ : smallSquare
-        smallSquareContainer[ smallIndex ] = this.board[ location ]
-      }
-      if(arrayOrObject === 'array'){
-        bigSquareContainer.push( smallSquareContainer )
-      } else {
-        bigSquareContainer[ bigSquare ] = smallSquareContainer
-      }
-    }
-
-    return bigSquareContainer
-  }
-
-  buildRowContainer() {
-    const arr = []
-    for(let itJ = 0; itJ < 9; itJ++) {
-      arr.push( this.board.substring(itJ*9, (itJ*9)+9).split('') )
-    }
-
-    return arr
-  }
-
-  buildColumnContainer() {
-    const arr = []
-    for(let itI = 0; itI < 9; itI++) {
-      let smallArr = []
-      for(let itJ = 0; itJ < 9; itJ++) {
-        smallArr.push( this.board.substring( (itI+(itJ*9)), (itI+(itJ*9) + 1) ) )
-      }
-      arr.push(smallArr)
-    }
-
-    return arr
+    console.log( this.numbersNeeded )
   }
 }

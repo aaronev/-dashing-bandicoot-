@@ -29,6 +29,33 @@ const checkContainer = container => {
   return false
 }
 
+const checkAnyNumbersAvailable = (rowsArr, columnsArr) => {
+  for(let itPR in rowsArr) {
+    for(let itPC in columnsArr) {
+      const pointRow = itPR
+      const pointCol = itPC
+      const usedNumbers = {}
+      let freeNumbersAvailable = false
+      for(let itR of rowsArr[ pointRow ]) {
+        usedNumbers[ itR ] = true
+      }
+      for(let itC of columnsArr[ pointCol ]) {
+        usedNumbers[ itC ] = true
+      }
+      for(let itI = 1; itI <= 9; itI++) {
+        if( !usedNumbers.hasOwnProperty(itI) ) {
+          freeNumbersAvailable = true
+        }
+      }
+      if(!freeNumbersAvailable){
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
 const errorChecking = (board, squaresArr, rowsArr, columnsArr, BOARD_LENGTH) => {
   let squareRepeat = false
 
@@ -38,6 +65,9 @@ const errorChecking = (board, squaresArr, rowsArr, columnsArr, BOARD_LENGTH) => 
   }
   if(!squareRepeat) {
     squareRepeat = checkContainer(columnsArr)
+  }
+  if(!squareRepeat) {
+    squareRepeat = checkAnyNumbersAvailable(rowsArr, columnsArr)
   }
 
   const errorConditions = (
