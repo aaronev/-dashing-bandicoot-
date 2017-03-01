@@ -10,8 +10,7 @@ const buildMap = boardString => {
   const map = {
     rows: [],
     cols: [],
-    sqrs: [],
-    sqrsNumbersNeeded: 
+    sqrs: []
   }
   const pushContainers = [
     [rowsObj, 'rows'],
@@ -44,11 +43,6 @@ const buildMap = boardString => {
     for( let item in container[0] ) {
       map[container[1]][item] = container[0][item]
     }
-  }
-
-  // Get numbers needed for each square
-  for( let square of map.sqrs ) {
-
   }
 
   return map
