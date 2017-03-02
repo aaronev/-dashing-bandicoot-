@@ -1,8 +1,9 @@
 const getRow = cell => Math.floor(cell / 9)
 const getCol = cell => cell % 9
 const getBlock = cell => Math.floor(getRow(cell) / 3) * 3 + Math.floor(getCol(cell) / 3)
+const NUMBERS = [1,2,3,4,5,6,7,8,9]
 
-const buildMap = boardString => {
+const buildMap = (boardString) => {
   const board = boardString.split('')
   let rowsObj = {}
   let colsObj = {}
@@ -10,7 +11,9 @@ const buildMap = boardString => {
   const map = {
     rows: [],
     cols: [],
-    sqrs: []
+    sqrs: [],
+    potentialNumbers: [], // TODO: Rename better. Potential numbers is all numbers that could potentially fit into a given slot. No regard to what numbers the square has already consumed.
+    numbersNeeded: []     // Where as numbersNeeded is an array indexed by big square, of numbers that that square still needs to have filled.
   }
   const pushContainers = [
     [rowsObj, 'rows'],

@@ -1,19 +1,75 @@
 const {buildMap} = require('./buildMap')
 const NUMBERS = [1,2,3,4,5,6,7,8,9]
 
+const arrayIntersect = (arr1, arr2) => {
+  return arr1.reduce(
+    (r,a) => arr2.includes(a) && r.concat(a) || r, [] // What does this mean?!
+  )
+}
+
+const getNumbersMinusColRow = (numbersRemaining, slot, board) => {
+  for( let rowNumber of board.rows[slot.row] ) {
+    numbersRemaining = removeNumbers(rowNumber.num, numbersRemaining)
+  }
+  for( let colNumber of board.cols[slot.col] ) {
+    numbersRemaining = removeNumbers(colNumber.num, numbersRemaining)
+  }
+  return numbersRemaining
+}
+
+const removeNumbers = (number, arrayCheckAgainst) => {
+  if(number !== '.') {
+    const num = parseInt(number)
+    const indexLocation = arrayCheckAgainst.findIndex( ele => {
+      return ele === num
+    })
+    const returnArray = arrayCheckAgainst.slice()
+    if( indexLocation !== -1 ) {
+      returnArray.splice( indexLocation, 1 )
+      return returnArray
+    }
+  }
+  return arrayCheckAgainst
+}
+
 const getNumsNeeded = square => {
-  const numbersNeeded = NUMBERS.slice()
+  let numbersNeeded = NUMBERS.slice()
   for( let number of square ) {
     if( number.num !== '.' ) {
-      const num = parseInt(number.num)
-      const indexLocation = numbersNeeded.findIndex( ele => {
-        return ele === num
-      })
-      numbersNeeded.splice( indexLocation, 1 )
+      numbersNeeded = removeNumbers(number.num, numbersNeeded)
     }
   }
 
   return numbersNeeded
+}
+
+const runForEachSquareSlot = (callback, board) => {
+  const squares = board.sqrs
+  for( let square of squares) {
+    const numbersNeeded = getNumsNeeded(square)
+    for( let slot of square ) {
+      try {
+        let numbersRemaining = NUMBERS.slice()
+        if ( slot.num === '.' ) {
+          numbersRemaining = getNumbersMinusColRow(numbersRemaining, slot, board)
+          callback( slot, numbersNeeded, numbersRemaining )
+        }
+        // While were at it, capture what numbers could go in a given slot here.
+        // NOTE: This isn't part of error checking, but we're already looped
+        // in the particular nested way that we would need to be in order to
+        // access this particular information :
+        const info = {
+          col: slot.col,
+          row: slot.row,
+          numbers: numbersRemaining.slice()
+        }
+        board.potentialNumbers.push(info)
+        // END NOTE
+      } catch(err) {
+        throw err
+      }
+    }
+  }
 }
 
 module.exports = class Sudoku{
@@ -21,6 +77,16 @@ module.exports = class Sudoku{
     this.boardString = board
     try {
       this.board = buildMap(board)
+
+      // Calculate and populate potential numbers for each square
+      for( let square in this.board.sqrs ) {
+        let potentialNumbers = NUMBERS.slice()
+        for( let itI of this.board.sqrs[square] ) {
+          potentialNumbers = removeNumbers(itI.num, potentialNumbers)
+        }
+        this.board.numbersNeeded.push(potentialNumbers)
+      }
+      console.log('THIS.BOARD.NUMBERSNEEDED', this.board.numbersNeeded)
     }
     catch(err) {
       this.error = err
@@ -32,42 +98,44 @@ module.exports = class Sudoku{
   }
 
   errorChecking(){
+    try {
+      // Check if row and column adjacent to slot have consumed all numbers
+      runForEachSquareSlot( (slot, numbersNeeded, numbersRemaining ) => {
+        if( numbersRemaining.length <= 0 ) {
+          this.error = 'ERROR: Bad Board'
+          throw 'Error'
+        }
+      }, this.board)
 
+      // Check all numbers needed are available to place somewhere
+      runForEachSquareSlot( (slot, numbersNeeded, numbersRemaining) => {
+        let matching
+        let potentialNumbers = this.board.numbersNeeded[slot.sqr]
+
+        // TODO: Left off here before commit. Looking for way to track numbers used from the matching array. if any numbers are remaining after assigning them all, we have a bad board
+
+        matching = arrayIntersect(numbersRemaining, potentialNumbers)
+        console.log('MATCHING', matching)
+
+      }, this.board)
+    }
+    catch(err){
+      console.log('ERR', err)
+      throw this.error ? this.error : err
+    }
   }
 
   solve() {
-    // DEBUG: Remove me before production or Prrr:
     console.log('\n')
     this.printBoard()
 
-    // Check all numbers needed are available to place somewhere
-    for( let square of this.board.sqrs ) {
-      const numbersNeeded = getNumsNeeded(square)
-// TODO: Put object which contains col & row each needed number could go into
-// Figure out way to know what numbersNeeded can't find a placement
-      for( let slot of square ) {
-        if( slot.num === '.' ) {
-          for( let numNeed in neededObject ) {
-            let numberAlreadyUsed = false
-            for( let rowNum of this.board.rows[slot.row] ) {
-              if( rowNum.num === numNeeded ) {
-                numberAlreadyUsed = true
-                break
-              }
-            }
-            if( !numberAlreadyUsed ) {
-              if( availableSpot[slot.row][slot.col] ){
-                availableSpot[slot.row][slot.col].push(numNeed)
-              } else {
-                availableSpot[slot.row][slot.col] = Array(numNeed)
-              }
-            }
-          }
-        }
-      }
+    try {
+      this.errorChecking()
+    }
+    catch(err) {
+      return err
     }
 
-    if( this.error ) return this.error
     return false
   }
 
