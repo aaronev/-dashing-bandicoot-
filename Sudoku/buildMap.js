@@ -31,8 +31,8 @@ const buildMap = boardString => {
       [colsObj, 'col'],
       [sqrsObj, 'sqr']
     ]
-    for( let container of pushContainers ){
-      if(container[0][ obj[container[1]] ]){
+    for( let container of pushContainers ) {
+      if( container[0][ obj[container[1]] ] ) {
         container[0][ obj[container[1]] ].push(obj)
       } else {
         container[0][ obj[container[1]] ] = Array(obj)
@@ -42,6 +42,15 @@ const buildMap = boardString => {
   for( let container of pushContainers ){
     for( let item in container[0] ) {
       map[container[1]][item] = container[0][item]
+
+      // Error catching
+      for( let itI = 0; itI < 9; itI++ ) {
+        for( let itJ = itI+1; itJ < 9; itJ++ ) {
+          if( container[0][item][itI].num === container[0][item][itJ].num && container[0][item][itI].num !== '.') {
+            throw 'ERROR: Bad Board'
+          }
+        }
+      }
     }
   }
 
