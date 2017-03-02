@@ -2,7 +2,13 @@ const {buildMap} = require('./buildMap')
 
 module.exports = class Sudoku{
   constructor(board){
-    this.board = buildMap(board)
+    this.boardString = board
+    try {
+      this.board = buildMap(board)
+    }
+    catch(err) {
+      this.error = err
+    }
   }
 
   isSolved() {
@@ -18,13 +24,12 @@ module.exports = class Sudoku{
     console.log('\n')
     this.printBoard()
 
-    let error = this.errorChecking()
-    if(error) return error
-
+    if( this.error ) return this.error
+    return false
   }
 
   printBoard() {
-    const board = this.board
+    const board = this.boardString
     let logString = ' |-----------------------|\n'
     for(let iterI = 0; iterI < 80; iterI += 3) {
       logString += ' | ' + board.substring(iterI, iterI+1) + ' '
@@ -34,6 +39,5 @@ module.exports = class Sudoku{
       if( (iterI+3) % 27 === 0 ) logString += ' |-----------------------|\n'
     }
     console.log( logString )
-    console.log( this.numbersNeeded )
   }
 }
