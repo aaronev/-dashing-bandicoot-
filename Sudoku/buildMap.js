@@ -13,8 +13,11 @@ const buildMap = (boardString, removeNumbers) => {
     cols: [],
     sqrs: [],
     potentialNumbers: [], // TODO: Rename better. Potential numbers is all numbers that could potentially fit into a given slot. No regard to what numbers the square has already consumed.
-    numbersNeededForSquare: [],    // Where as numbersNeeded is an array indexed by big square, of numbers that that square still needs to have filled.
-    secondRunHack: false
+    numbersNeeded: {
+      square: [],
+      column: [],
+      row: []
+    }
   }
   const pushContainers = [
     [rowsObj, 'rows'],
@@ -83,6 +86,28 @@ const buildMap = (boardString, removeNumbers) => {
         map.potentialNumbers.push(info)
       }
     }
+  }
+
+  // Builds numbersNeededForColumn
+  for( let column in map.cols ) {
+    let numbersNeededForColumn = [...NUMBERS]
+    map.cols[column].forEach( n => {
+      if( n.num !== '.') {
+        numbersNeededForColumn = removeNumbers( n.num, numbersNeededForColumn )
+      }
+    })
+    map.numbersNeeded.column.push( numbersNeededForColumn )
+  }
+
+  // Builds numbersNeededForRow
+  for( let row in map.rows ) {
+    let numbersNeededForRow = [...NUMBERS]
+    map.rows[row].forEach( n => {
+      if( n.num !== '.') {
+        numbersNeededForRow = removeNumbers( n.num, numbersNeededForRow )
+      }
+    })
+    map.numbersNeeded.row.push( numbersNeededForRow )
   }
 
   return map

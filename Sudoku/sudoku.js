@@ -1,6 +1,30 @@
 const {buildMap} = require('./buildMap')
 const NUMBERS = [1,2,3,4,5,6,7,8,9]
 
+const checkNumbersNeededAreUsedForGivenContainerType = (type, board) => { // TODO: HELP! What do I name this function to be informative AND concise?
+  const boardContainerName = {
+    square: 'sqrs',
+    row: 'rows',
+    column: 'cols'
+  }
+  const parentContainer = board[boardContainerName[type]]
+
+  for( let container in parentContainer ) {
+    let numbersNotUsed = board.numbersNeeded[type][container].slice()
+    const numbersUsedInContainer = board.potentialNumbers.filter( n => {
+      return n[boardContainerName[type]] === container
+    })
+    for( let numberSet of numbersUsedInContainer ) {
+      numberSet.numbers.forEach( n => {
+        numbersNotUsed = removeNumbers(n, numbersNotUsed)
+      })
+    }
+    if(numbersNotUsed.length > 0){
+      throw 'ERROR: Bad Board'
+    }
+  }
+}
+
 const arrayIntersect = (arr1, arr2) => {
   return arr1.reduce(
     (r,a) => arr2.includes(a) && r.concat(a) || r, [] // What does this mean?!
@@ -23,6 +47,7 @@ const removeNumbers = (number, arrayCheckAgainst) => {
     const indexLocation = arrayCheckAgainst.findIndex( ele => {
       return ele === num
     })
+    // const returnArray = [ ...arrayCheckAgainst ] TODO Test with specific cases in singular test
     const returnArray = arrayCheckAgainst.slice()
     if( indexLocation !== -1 ) {
       returnArray.splice( indexLocation, 1 )
@@ -56,7 +81,7 @@ module.exports = class Sudoku{
         for( let itI of boardSqrs[square] ) {
           numbersToBeUsed = removeNumbers(itI.num, numbersToBeUsed)
         }
-        this.board.numbersNeededForSquare.push(numbersToBeUsed)
+        this.board.numbersNeeded.square.push(numbersToBeUsed)
       }
 
       // var sqrForNumbers = this.board.potentialNumbers.filter( n => {
@@ -75,22 +100,14 @@ module.exports = class Sudoku{
   }
 
   errorChecking(){
-    for( let square in this.board.sqrs ) {
-      const sqrNumbersNeeded = this.board.numbersNeededForSquare[square]
-      let numbersNotUsed = sqrNumbersNeeded.slice()
-      const numbersUsedInSqr = this.board.potentialNumbers.filter( n => {
-        return n.sqr === square
-      })
-      for( let numberSet of numbersUsedInSqr ) {
-        numberSet.numbers.forEach( n => {
-          numbersNotUsed = removeNumbers(n, numbersNotUsed)
-        })
-      }
-      if(numbersNotUsed.length > 0){
-        throw 'ERROR: Bad Board'
-      }
+    // Check if any square cant use all of its numbers needed
+    checkNumbersNeededAreUsedForGivenContainerType('square', this.board)
 
-    }
+    // Check if any column cant use all of its numbers needed
+    checkNumbersNeededAreUsedForGivenContainerType('cols', this.board)
+
+    // Check if any row cant use all of its numbers needed
+    checkNumbersNeededAreUsedForGivenContainerType('rows', this.board)
   }
 
   solve() {
@@ -105,6 +122,7 @@ module.exports = class Sudoku{
     try {
       this.errorChecking()
     } catch(err) {
+      console.log('ERR', err)
       return err
     }
 
