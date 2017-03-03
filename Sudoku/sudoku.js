@@ -43,52 +43,29 @@ const getNumsNeeded = square => {
   return numbersNeeded
 }
 
-const runForEachSquareSlot = (callback, board) => {
-  const squares = board.sqrs
-  for( let square of squares) {
-    const numbersNeeded = getNumsNeeded(square)
-    for( let slot of square ) {
-      try {
-        let numbersRemaining = NUMBERS.slice()
-        if ( slot.num === '.' ) {
-          numbersRemaining = getNumbersMinusColRow(numbersRemaining, slot, board)
-          callback( slot, numbersNeeded, numbersRemaining )
-        }
-        // While were at it, capture what numbers could go in a given slot here.
-        // NOTE: This isn't part of error checking, but we're already looped
-        // in the particular nested way that we would need to be in order to
-        // access this particular information :
-        const info = {
-          col: slot.col,
-          row: slot.row,
-          numbers: numbersRemaining.slice()
-        }
-        board.potentialNumbers.push(info)
-        // END NOTE
-      } catch(err) {
-        throw err
-      }
-    }
-  }
-}
-
 module.exports = class Sudoku{
   constructor(board){
     this.boardString = board
     try {
-      this.board = buildMap(board)
+      this.board = buildMap(board, removeNumbers)
 
       // Calculate and populate potential numbers for each square
       for( let square in this.board.sqrs ) {
-        let potentialNumbers = NUMBERS.slice()
-        for( let itI of this.board.sqrs[square] ) {
-          potentialNumbers = removeNumbers(itI.num, potentialNumbers)
+        const boardSqrs = this.board.sqrs
+        let numbersToBeUsed = NUMBERS.slice()
+        for( let itI of boardSqrs[square] ) {
+          numbersToBeUsed = removeNumbers(itI.num, numbersToBeUsed)
         }
-        this.board.numbersNeeded.push(potentialNumbers)
+        this.board.numbersNeededForSquare.push(numbersToBeUsed)
       }
-      console.log('THIS.BOARD.NUMBERSNEEDED', this.board.numbersNeeded)
+
+      // var sqrForNumbers = this.board.potentialNumbers.filter( n => {
+      //   return n.sqr === '4'
+      // })
+      // console.log('SQRFORNUMBERS', sqrForNumbers)
     }
     catch(err) {
+      console.log('ERR', err)
       this.error = err
     }
   }
@@ -98,41 +75,36 @@ module.exports = class Sudoku{
   }
 
   errorChecking(){
-    try {
-      // Check if row and column adjacent to slot have consumed all numbers
-      runForEachSquareSlot( (slot, numbersNeeded, numbersRemaining ) => {
-        if( numbersRemaining.length <= 0 ) {
-          this.error = 'ERROR: Bad Board'
-          throw 'Error'
-        }
-      }, this.board)
+    for( let square in this.board.sqrs ) {
+      const sqrNumbersNeeded = this.board.numbersNeededForSquare[square]
+      let numbersNotUsed = sqrNumbersNeeded.slice()
+      const numbersUsedInSqr = this.board.potentialNumbers.filter( n => {
+        return n.sqr === square
+      })
+      for( let numberSet of numbersUsedInSqr ) {
+        numberSet.numbers.forEach( n => {
+          numbersNotUsed = removeNumbers(n, numbersNotUsed)
+        })
+      }
+      if(numbersNotUsed.length > 0){
+        throw 'ERROR: Bad Board'
+      }
 
-      // Check all numbers needed are available to place somewhere
-      runForEachSquareSlot( (slot, numbersNeeded, numbersRemaining) => {
-        let matching
-        let potentialNumbers = this.board.numbersNeeded[slot.sqr]
-
-        // TODO: Left off here before commit. Looking for way to track numbers used from the matching array. if any numbers are remaining after assigning them all, we have a bad board
-
-        matching = arrayIntersect(numbersRemaining, potentialNumbers)
-        console.log('MATCHING', matching)
-
-      }, this.board)
-    }
-    catch(err){
-      console.log('ERR', err)
-      throw this.error ? this.error : err
     }
   }
 
   solve() {
+    if(this.error){
+      return this.error
+    }
+
     console.log('\n')
     this.printBoard()
 
+    console.log("Entering error check")
     try {
       this.errorChecking()
-    }
-    catch(err) {
+    } catch(err) {
       return err
     }
 

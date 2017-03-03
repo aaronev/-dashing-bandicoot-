@@ -3,7 +3,7 @@ const getCol = cell => cell % 9
 const getBlock = cell => Math.floor(getRow(cell) / 3) * 3 + Math.floor(getCol(cell) / 3)
 const NUMBERS = [1,2,3,4,5,6,7,8,9]
 
-const buildMap = (boardString) => {
+const buildMap = (boardString, removeNumbers) => {
   const board = boardString.split('')
   let rowsObj = {}
   let colsObj = {}
@@ -13,7 +13,8 @@ const buildMap = (boardString) => {
     cols: [],
     sqrs: [],
     potentialNumbers: [], // TODO: Rename better. Potential numbers is all numbers that could potentially fit into a given slot. No regard to what numbers the square has already consumed.
-    numbersNeeded: []     // Where as numbersNeeded is an array indexed by big square, of numbers that that square still needs to have filled.
+    numbersNeededForSquare: [],    // Where as numbersNeeded is an array indexed by big square, of numbers that that square still needs to have filled.
+    secondRunHack: false
   }
   const pushContainers = [
     [rowsObj, 'rows'],
@@ -53,6 +54,33 @@ const buildMap = (boardString) => {
             throw 'ERROR: Bad Board'
           }
         }
+      }
+    }
+  }
+
+  for( let square in map.sqrs ) {
+    for( let slot of map.sqrs[square] ) {
+      let numbersRemaining = NUMBERS.slice()
+      if( slot.num === '.' ) {
+        for( let rowNumber of map.rows[slot.row] ) {
+          numbersRemaining = removeNumbers(rowNumber.num, numbersRemaining)
+        }
+        for( let colNumber of map.cols[slot.col] ) {
+          numbersRemaining = removeNumbers(colNumber.num, numbersRemaining)
+        }
+        if( numbersRemaining.length <= 0 ) {
+          throw 'ERROR: Bad Board'
+        }
+        for( let sqrNumber of map.sqrs[slot.sqr] ) {
+          numbersRemaining = removeNumbers(sqrNumber.num, numbersRemaining)
+        }
+        const info = {
+          sqr: square,
+          col: slot.col,
+          row: slot.row,
+          numbers: numbersRemaining.slice()
+        }
+        map.potentialNumbers.push(info)
       }
     }
   }
