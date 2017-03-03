@@ -38,13 +38,14 @@ describe('Sudoku solver', function() {
     expect(sudoku.solve()).toBe("ERROR: Bad Board");
   });
 
-  xit('recognizes a solved board as solved', function() {
+  it('recognizes a solved board as solved', function() {
     var sudoku = new Sudoku("974236158638591742125487936316754289742918563589362417867125394253649871491873625");
     expect(sudoku.isSolved()).toBe(true);
   });
 
-  xit('recognizes an unsolved board as solved', function() {
+  it('recognizes an unsolved board as solved', function() {
     var sudoku = new Sudoku("...236158638591742125487936316754289742918563589362417867125394253649871491873...");
+    sudoku.printBoard()
     expect(sudoku.isSolved()).toBe(false);
   });
 

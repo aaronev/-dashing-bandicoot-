@@ -7,12 +7,18 @@ const checkNumbersNeededAreUsedForGivenContainerType = (type, board) => { // TOD
     row: 'rows',
     column: 'cols'
   }
+  const slotContainerName = {
+    square: 'sqr',
+    row: 'row',
+    column: 'col'
+  }
   const parentContainer = board[boardContainerName[type]]
-
   for( let container in parentContainer ) {
+    container = parseInt(container)
     let numbersNotUsed = board.numbersNeeded[type][container].slice()
+    // console.log('NUMBERSNOTUSED', numbersNotUsed[0] === board.potentialNumbers[0].numbers[0])
     const numbersUsedInContainer = board.potentialNumbers.filter( n => {
-      return n[boardContainerName[type]] === container
+      return parseInt(n[slotContainerName[type]]) === container
     })
     for( let numberSet of numbersUsedInContainer ) {
       numberSet.numbers.forEach( n => {
@@ -20,7 +26,11 @@ const checkNumbersNeededAreUsedForGivenContainerType = (type, board) => { // TOD
       })
     }
     if(numbersNotUsed.length > 0){
-      throw 'ERROR: Bad Board'
+      const err = {
+        fromWho: type,
+        error: 'ERROR: Bad Board'
+      }
+      throw err
     }
   }
 }
@@ -83,31 +93,38 @@ module.exports = class Sudoku{
         }
         this.board.numbersNeeded.square.push(numbersToBeUsed)
       }
-
-      // var sqrForNumbers = this.board.potentialNumbers.filter( n => {
-      //   return n.sqr === '4'
-      // })
-      // console.log('SQRFORNUMBERS', sqrForNumbers)
     }
     catch(err) {
-      console.log('ERR', err)
       this.error = err
     }
   }
 
   isSolved() {
+    try {
+      this.errorChecking()
+    } catch(err) {
+      return err
+    }
 
+    // Are there dots? false. Else true.
+    return this.boardString.match(/\./) === null
   }
 
   errorChecking(){
-    // Check if any square cant use all of its numbers needed
-    checkNumbersNeededAreUsedForGivenContainerType('square', this.board)
+    try{
+      // Check if any square cant use all of its numbers needed
+      checkNumbersNeededAreUsedForGivenContainerType('square', this.board)
 
-    // Check if any column cant use all of its numbers needed
-    checkNumbersNeededAreUsedForGivenContainerType('cols', this.board)
+      // Check if any column cant use all of its numbers needed
+      checkNumbersNeededAreUsedForGivenContainerType('column', this.board)
 
-    // Check if any row cant use all of its numbers needed
-    checkNumbersNeededAreUsedForGivenContainerType('rows', this.board)
+      // Check if any row cant use all of its numbers needed
+      checkNumbersNeededAreUsedForGivenContainerType('row', this.board)
+    }
+    catch(err){
+      console.log(err)
+      throw err.error
+    }
   }
 
   solve() {
@@ -118,11 +135,9 @@ module.exports = class Sudoku{
     console.log('\n')
     this.printBoard()
 
-    console.log("Entering error check")
     try {
       this.errorChecking()
     } catch(err) {
-      console.log('ERR', err)
       return err
     }
 
