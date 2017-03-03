@@ -57,7 +57,6 @@ const removeNumbers = (number, arrayCheckAgainst) => {
     const indexLocation = arrayCheckAgainst.findIndex( ele => {
       return ele === num
     })
-    // const returnArray = [ ...arrayCheckAgainst ] TODO Test with specific cases in singular test
     const returnArray = arrayCheckAgainst.slice()
     if( indexLocation !== -1 ) {
       returnArray.splice( indexLocation, 1 )
@@ -132,16 +131,39 @@ module.exports = class Sudoku{
       return this.error
     }
 
-    console.log('\n')
-    this.printBoard()
-
     try {
       this.errorChecking()
     } catch(err) {
       return err
     }
 
-    return false
+    let solvedBoardString = undefined
+    for( let i = 0; i < 20; i++) {
+      this.board.potentialNumbers.forEach( ele => {
+        if(ele.numbers.length === 1) {
+          const numberToSetTo = ele.numbers.pop()
+          this.board.rows[ele.row][ele.col].num = numberToSetTo
+          this.board.cols[ele.col][ele.row].num = numberToSetTo
+          // this.board.sqrs[ele.sqr][ele.sqrPos].num = numberToSetTo
+          const newBoardString = []
+          this.board.rows.forEach( singleRow => {
+            singleRow.forEach( itemInRow => {
+              newBoardString.push(itemInRow.num)
+            })
+          })
+          solvedBoardString = newBoardString.join('')
+        }
+      })
+      console.log('SOLVEDBOARDSTRING', solvedBoardString)
+      if(solvedBoardString) {
+        this.boardString = solvedBoardString
+      }
+    }
+
+    console.log('\n')
+    this.printBoard()
+
+    return solvedBoardString ? solvedBoardString : false
   }
 
   printBoard() {

@@ -1,6 +1,8 @@
 const getRow = cell => Math.floor(cell / 9)
 const getCol = cell => cell % 9
 const getBlock = cell => Math.floor(getRow(cell) / 3) * 3 + Math.floor(getCol(cell) / 3)
+const getSqrPos = cell => ((getCol(cell) % 3) + ((getRow(cell) * 3) % 9))
+
 const NUMBERS = [1,2,3,4,5,6,7,8,9]
 
 const buildMap = (boardString, removeNumbers) => {
@@ -30,7 +32,9 @@ const buildMap = (boardString, removeNumbers) => {
       row: getRow(number),
       col: getCol(number),
       sqr: getBlock(number),
-      num: board[number]
+      sqrPos: getSqrPos(number),
+      num: board[number],
+      stringLoc: number
     }
 
     const pushContainers = [
