@@ -1,6 +1,40 @@
 const {buildMap} = require('./buildMap')
 const NUMBERS = [1,2,3,4,5,6,7,8,9]
 
+const checkNumbersNeededAreUsedForGivenContainerType = (type, board) => { // TODO: HELP! What do I name this function to be informative AND concise?
+  const boardContainerName = {
+    square: 'sqrs',
+    row: 'rows',
+    column: 'cols'
+  }
+  const slotContainerName = {
+    square: 'sqr',
+    row: 'row',
+    column: 'col'
+  }
+  const parentContainer = board[boardContainerName[type]]
+  for( let container in parentContainer ) {
+    container = parseInt(container)
+    let numbersNotUsed = board.numbersNeeded[type][container].slice()
+    // console.log('NUMBERSNOTUSED', numbersNotUsed[0] === board.potentialNumbers[0].numbers[0])
+    const numbersUsedInContainer = board.potentialNumbers.filter( n => {
+      return parseInt(n[slotContainerName[type]]) === container
+    })
+    for( let numberSet of numbersUsedInContainer ) {
+      numberSet.numbers.forEach( n => {
+        numbersNotUsed = removeNumbers(n, numbersNotUsed)
+      })
+    }
+    if(numbersNotUsed.length > 0){
+      const err = {
+        fromWho: type,
+        error: 'ERROR: Bad Board'
+      }
+      throw err
+    }
+  }
+}
+
 const arrayIntersect = (arr1, arr2) => {
   return arr1.reduce(
     (r,a) => arr2.includes(a) && r.concat(a) || r, [] // What does this mean?!
@@ -56,40 +90,39 @@ module.exports = class Sudoku{
         for( let itI of boardSqrs[square] ) {
           numbersToBeUsed = removeNumbers(itI.num, numbersToBeUsed)
         }
-        this.board.numbersNeededForSquare.push(numbersToBeUsed)
+        this.board.numbersNeeded.square.push(numbersToBeUsed)
       }
-
-      // var sqrForNumbers = this.board.potentialNumbers.filter( n => {
-      //   return n.sqr === '4'
-      // })
-      // console.log('SQRFORNUMBERS', sqrForNumbers)
     }
     catch(err) {
-      console.log('ERR', err)
       this.error = err
     }
   }
 
   isSolved() {
+    try {
+      this.errorChecking()
+    } catch(err) {
+      return err
+    }
 
+    // Are there dots? false. Else true.
+    return this.boardString.match(/\./) === null
   }
 
   errorChecking(){
-    for( let square in this.board.sqrs ) {
-      const sqrNumbersNeeded = this.board.numbersNeededForSquare[square]
-      let numbersNotUsed = sqrNumbersNeeded.slice()
-      const numbersUsedInSqr = this.board.potentialNumbers.filter( n => {
-        return n.sqr === square
-      })
-      for( let numberSet of numbersUsedInSqr ) {
-        numberSet.numbers.forEach( n => {
-          numbersNotUsed = removeNumbers(n, numbersNotUsed)
-        })
-      }
-      if(numbersNotUsed.length > 0){
-        throw 'ERROR: Bad Board'
-      }
+    try{
+      // Check if any square cant use all of its numbers needed
+      checkNumbersNeededAreUsedForGivenContainerType('square', this.board)
 
+      // Check if any column cant use all of its numbers needed
+      checkNumbersNeededAreUsedForGivenContainerType('column', this.board)
+
+      // Check if any row cant use all of its numbers needed
+      checkNumbersNeededAreUsedForGivenContainerType('row', this.board)
+    }
+    catch(err){
+      console.log(err)
+      throw err.error
     }
   }
 
@@ -98,17 +131,39 @@ module.exports = class Sudoku{
       return this.error
     }
 
-    console.log('\n')
-    this.printBoard()
-
-    console.log("Entering error check")
     try {
       this.errorChecking()
     } catch(err) {
       return err
     }
 
-    return false
+    let solvedBoardString = undefined
+    for( let i = 0; i < 20; i++) {
+      this.board.potentialNumbers.forEach( ele => {
+        if(ele.numbers.length === 1) {
+          const numberToSetTo = ele.numbers.pop()
+          this.board.rows[ele.row][ele.col].num = numberToSetTo
+          this.board.cols[ele.col][ele.row].num = numberToSetTo
+          // this.board.sqrs[ele.sqr][ele.sqrPos].num = numberToSetTo
+          const newBoardString = []
+          this.board.rows.forEach( singleRow => {
+            singleRow.forEach( itemInRow => {
+              newBoardString.push(itemInRow.num)
+            })
+          })
+          solvedBoardString = newBoardString.join('')
+        }
+      })
+      console.log('SOLVEDBOARDSTRING', solvedBoardString)
+      if(solvedBoardString) {
+        this.boardString = solvedBoardString
+      }
+    }
+
+    console.log('\n')
+    this.printBoard()
+
+    return solvedBoardString ? solvedBoardString : false
   }
 
   printBoard() {
